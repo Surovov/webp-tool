@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>В WebP — картинки для Roll20 и не только</title>
+<meta name="description" content="Перетащи картинки — получи WebP. Всё считается в браузере, файлы никуда не отправляются.">
+<style>
+:root{--bg:#f6f4ef;--panel:#fff;--ink:#1c1b19;--dim:#6b665e;--line:#ddd8cd;--acc:#a8621a;--acc-ink:#fff;--ok:#2f7a4b;--warn:#a8621a;--bad:#b3352b;--r:10px}
+@media (prefers-color-scheme:dark){:root{--bg:#131217;--panel:#1c1b22;--ink:#ece8df;--dim:#9a958b;--line:#33313b;--acc:#e0a94e;--acc-ink:#1a1408;--ok:#6fbf8a;--warn:#e0a94e;--bad:#f08075}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:26px;margin:6px 0 2px}
+.sub{color:var(--dim);margin:0 0 16px}
+.drop{display:block;border:2px dashed var(--line);border-radius:var(--r);background:var(--panel);padding:30px 16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over,.drop:focus-within{border-color:var(--acc)}
+.drop b{display:block;font-size:19px}
+.drop span{color:var(--dim);font-size:14px}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.set{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+.set h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 8px}
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.modes label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:15px}
+.modes input{accent-color:var(--acc)}
+.modes label:has(input:checked){border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px}
+.row label{display:flex;align-items:center;gap:6px;font-size:15px}
+input[type=number]{width:84px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit}
+input[type=range]{accent-color:var(--acc);width:180px}
+.hint{color:var(--dim);font-size:13.5px;margin:8px 0 0}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 8px}
+.bar .sum{flex:1;min-width:200px;color:var(--dim)}
+.bar .sum b{color:var(--ink)}
+button{font:inherit;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;cursor:pointer}
+button.main{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+ul.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.it{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:8px 10px}
+.it .th{width:64px;height:64px;border-radius:7px;background:repeating-conic-gradient(#8883 0 25%,transparent 0 50%) 0 0/16px 16px;display:grid;place-items:center;overflow:hidden}
+.it .th img{max-width:100%;max-height:100%;display:block}
+.it .nm{font-weight:600;overflow-wrap:anywhere}
+.it .inf{color:var(--dim);font-size:13.5px}
+.it .inf .ok{color:var(--ok);font-weight:600}
+.it .inf .warn{color:var(--warn)}
+.it .inf .bad{color:var(--bad)}
+.it a.dl{display:inline-block;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:7px 12px;color:var(--ink);white-space:nowrap}
+.it a.dl:hover{border-color:var(--acc)}
+.alert{border:1px solid var(--bad);color:var(--bad);border-radius:var(--r);padding:10px 12px;margin:12px 0;background:var(--panel)}
+footer{margin-top:28px;color:var(--dim);font-size:13.5px}
+footer a{color:inherit}
+@media (max-width:560px){.it{grid-template-columns:48px minmax(0,1fr)}.it .th{width:48px;height:48px}.it .act{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<main>
+  <h1>В WebP</h1>
+  <p class="sub">Перетащи картинки — получи WebP. Всё считается прямо в браузере: файлы никуда не отправляются.</p>
+
+  <label class="drop" id="drop">
+    <input type="file" id="pick" accept="image/png,image/jpeg,image/bmp,image/gif,image/webp,image/avif" multiple>
+    <b>Перетащи картинки сюда или нажми, чтобы выбрать</b>
+    <span>PNG, JPG, BMP — сколько угодно сразу. Можно вставить из буфера: Ctrl+V.</span>
+  </label>
+
+  <section class="set" aria-label="Настройки">
+    <h2>Что сделать с размером</h2>
+    <div class="modes" role="radiogroup" aria-label="Размер">
+      <label><input type="radio" name="mode" value="asis" checked> Не менять</label>
+      <label><input type="radio" name="mode" value="t256"> Жетон 256</label>
+      <label><input type="radio" name="mode" value="t512"> Жетон 512</label>
+      <label><input type="radio" name="mode" value="map"> Карта по клеткам</label>
+      <label><input type="radio" name="mode" value="max"> Своя длинная сторона</label>
+    </div>
+    <div class="row" id="rowMap" hidden>
+      <label>клеток по ширине <input type="number" id="cols" min="1" max="400" value="42"></label>
+      <label>по высоте <input type="number" id="rows" min="1" max="400" value="28"></label>
+      <label>точек на клетку <input type="number" id="px" min="10" max="400" value="70"></label>
+      <span class="hint" id="mapOut"></span>
+    </div>
+    <div class="row" id="rowMax" hidden>
+      <label>длинная сторона, точек <input type="number" id="maxSide" min="16" max="16000" value="1024"></label>
+    </div>
+    <div class="row">
+      <label>качество <input type="range" id="q" min="50" max="100" value="90"> <b id="qv">90</b></label>
+    </div>
+    <p class="hint" id="modeHint">Меняется только формат: размер в точках остаётся прежним.</p>
+  </section>
+
+  <div class="alert" id="noWebp" hidden>Этот браузер не умеет сохранять WebP. Открой страницу в Chrome, Edge или Firefox.</div>
+
+  <div class="bar">
+    <span class="sum" id="sum">Пока ничего не загружено.</span>
+    <button type="button" id="clear" disabled>Очистить</button>
+    <button type="button" class="main" id="zip" disabled>Скачать всё одним архивом</button>
+  </div>
+  <ul class="list" id="list" aria-live="polite"></ul>
+
+  <footer>
+    Исходники и версия для командной строки: <a href="https://github.com/Surovov/webp-tool">github.com/Surovov/webp-tool</a>. Страница работает и без интернета — сохрани её себе и открывай двойным щелчком.
+  </footer>
+</main>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const items = [];           // { id, file, name, state: 'wait'|'ok'|'err', blob, w, h, w0, h0, note, url }
+let seq = 0, runId = 0, timer = 0;
+
+const HINTS = {
+  asis: 'Меняется только формат: размер в точках остаётся прежним.',
+  t256: 'Длинная сторона станет 256 точек — обычный жетон человека для Roll20. Маленькие картинки не увеличиваются. Прозрачный фон сохраняется.',
+  t512: 'Длинная сторона станет 512 точек — крупная техника и большие монстры. Маленькие картинки не увеличиваются.',
+  map: 'Картинка станет ровно «клетки × точки». В Roll20 клетка — 70 точек: карта 42×28 клеток = 2940×1960.',
+  max: 'Длинная сторона станет не больше указанного. Маленькие картинки не увеличиваются.'
+};
+function opts(){
+  const mode = (document.querySelector('input[name=mode]:checked') || {}).value || 'asis';
+  const n = (id, d) => { const v = Math.round(+$(id).value); return v > 0 ? v : d; };
+  return { mode, cols: n('#cols', 42), rows: n('#rows', 28), px: n('#px', 70), maxSide: n('#maxSide', 1024), q: Math.min(100, Math.max(1, +$('#q').value || 90)) / 100 };
+}
+function targetSize(w, h, o){
+  if (o.mode === 'map') return [o.cols * o.px, o.rows * o.px];
+  const m = o.mode === 't256' ? 256 : o.mode === 't512' ? 512 : o.mode === 'max' ? o.maxSide : 0;
+  if (m && Math.max(w, h) > m){ const k = m / Math.max(w, h); return [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))]; }
+  return [w, h];
+}
+async function loadImage(file){
+  if (window.createImageBitmap){ try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch(e){} }
+  return await new Promise((res, rej) => { const im = new Image(), u = URL.createObjectURL(file); im.onload = () => { URL.revokeObjectURL(u); res(im); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('не открывается как картинка')); }; im.src = u; });
+}
+function mk(w, h){ const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+// уменьшение ступенями по половине: одна большая ступень даёт «песок» на мелких деталях
+function scaled(src, sw, sh, w, h){
+  let cur = src, cw = sw, ch = sh;
+  while (cw / 2 >= w && ch / 2 >= h){ const nw = Math.max(w, Math.round(cw / 2)), nh = Math.max(h, Math.round(ch / 2)), c = mk(nw, nh), x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(cur, 0, 0, cw, ch, 0, 0, nw, nh); cur = c; cw = nw; ch = nh; }
+  const c = mk(w, h), x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(cur, 0, 0, cw, ch, 0, 0, w, h); return c;
+}
+async function convertFile(file, o){
+  const im = await loadImage(file), w0 = im.width, h0 = im.height;
+  if (!w0 || !h0) throw new Error('пустая картинка');
+  const [w, h] = targetSize(w0, h0, o);
+  if (w > 16384 || h > 16384 || w * h > 268000000) throw new Error('слишком большая для браузера (' + w + '×' + h + ')');
+  const c = scaled(im, w0, h0, w, h); if (im.close) im.close();
+  const blob = await new Promise(r => c.toBlob(r, 'image/webp', o.q));
+  if (!blob || blob.type !== 'image/webp'){ const e = new Error('браузер не умеет сохранять WebP'); e.noWebp = true; throw e; }
+  const note = o.mode === 'map' && Math.abs(w / h - w0 / h0) > 0.02 * (w0 / h0) ? 'пропорции другие — картинка растянута' : '';
+  return { blob, w, h, w0, h0, note };
+}
+const kb = n => n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(n / 1024)) + ' КБ';
+const pct = (a, b) => Math.max(1, Math.min(99, Math.round((1 - b / a) * 100)));   // «−100 %» выглядит как «файл пропал»
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function outName(it){ return it.name.replace(/\.[^.\/\\]+$/, '') + '.webp'; }
+
+function render(){
+  const ul = $('#list');
+  ul.innerHTML = items.map(it => {
+    let inf;
+    if (it.state === 'ok'){ const less = it.blob.size < it.file.size;
+      inf = kb(it.file.size) + ' → <span class="ok">' + kb(it.blob.size) + '</span>' + (less ? ' (−' + pct(it.file.size, it.blob.size) + ' %)' : it.blob.size > it.file.size ? ' <span class="warn">стал больше исходника</span>' : '') + ' · ' + (it.w0 !== it.w || it.h0 !== it.h ? it.w0 + '×' + it.h0 + ' → ' : '') + it.w + '×' + it.h + (it.note ? ' · <span class="warn">' + esc(it.note) + '</span>' : ''); }
+    else if (it.state === 'err') inf = '<span class="bad">Не получилось: ' + esc(it.note) + '</span>';
+    else inf = 'считаю…';
+    return '<li class="it" data-id="' + it.id + '"><span class="th">' + (it.url ? '<img src="' + it.url + '" alt="">' : '') + '</span><span><span class="nm">' + esc(it.state === 'ok' ? outName(it) : it.name) + '</span><br><span class="inf">' + inf + '</span></span>' +
+      '<span class="act">' + (it.state === 'ok' ? '<a class="dl" href="' + it.url + '" download="' + esc(outName(it)) + '">Скачать</a>' : '') + '</span></li>';
+  }).join('');
+  const ok = items.filter(it => it.state === 'ok'), a = ok.reduce((n, it) => n + it.file.size, 0), b = ok.reduce((n, it) => n + it.blob.size, 0), bad = items.filter(it => it.state === 'err').length;
+  $('#sum').innerHTML = !items.length ? 'Пока ничего не загружено.' : 'Файлов: <b>' + ok.length + '</b>' + (items.length > ok.length + bad ? ' из ' + items.length : '') + (ok.length ? ' · было ' + kb(a) + ', стало <b>' + kb(b) + '</b>' + (a > b ? ' (−' + pct(a, b) + ' %)' : '') : '') + (bad ? ' · не получилось: ' + bad : '');
+  $('#zip').disabled = !ok.length; $('#clear').disabled = !items.length;
+}
+async function runAll(){
+  const my = ++runId, o = opts();
+  items.forEach(it => { it.state = 'wait'; }); render();
+  for (const it of items.slice()){
+    if (my !== runId) return;
+    try { const r = await convertFile(it.file, o); if (my !== runId) return; if (it.url) URL.revokeObjectURL(it.url); Object.assign(it, r, { state: 'ok', url: URL.createObjectURL(r.blob) }); }
+    catch(e){ if (my !== runId) return; if (it.url){ URL.revokeObjectURL(it.url); it.url = ''; } it.state = 'err'; it.note = e && e.message || 'ошибка'; if (e && e.noWebp) $('#noWebp').hidden = false; }
+    render();
+  }
+}
+function addFiles(list){
+  const L = [].slice.call(list || []).filter(f => f && (/^image\//.test(f.type) || /\.(png|jpe?g|bmp|gif|webp|avif|tiff?)$/i.test(f.name)));
+  if (!L.length) return 0;
+  L.forEach(f => items.push({ id: ++seq, file: f, name: f.name || ('картинка-' + (seq + 1) + '.png'), state: 'wait', url: '' }));
+  runAll(); return L.length;
+}
+function later(){ clearTimeout(timer); timer = setTimeout(() => { if (items.length) runAll(); }, 250); }
+function syncUI(){
+  const o = opts();
+  $('#rowMap').hidden = o.mode !== 'map'; $('#rowMax').hidden = o.mode !== 'max'; $('#modeHint').textContent = HINTS[o.mode] || '';
+  $('#mapOut').textContent = '= ' + o.cols * o.px + '×' + o.rows * o.px + ' точек'; $('#qv').textContent = Math.round(o.q * 100);
+}
+
+/* ---------- архив без сжатия (WebP уже сжат) ---------- */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u){ let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(files){   // [{ name, data: Uint8Array }]
+  const enc = new TextEncoder(), parts = [], cd = [], d = new Date();
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  let off = 0;
+  files.forEach(f => { const nm = enc.encode(f.name), crc = crc32(f.data), n = f.data.length;
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, time, true); h.setUint16(12, date, true); h.setUint32(14, crc, true); h.setUint32(18, n, true); h.setUint32(22, n, true); h.setUint16(26, nm.length, true); h.setUint16(28, 0, true);
+    parts.push(new Uint8Array(h.buffer), nm, f.data);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, time, true); c.setUint16(14, date, true); c.setUint32(16, crc, true); c.setUint32(20, n, true); c.setUint32(24, n, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    cd.push(new Uint8Array(c.buffer), nm); off += 30 + nm.length + n; });
+  const cdSize = cd.reduce((s, p) => s + p.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cdSize, true); e.setUint32(16, off, true);
+  return new Blob(parts.concat(cd, [new Uint8Array(e.buffer)]), { type: 'application/zip' });
+}
+async function downloadZip(){
+  const ok = items.filter(it => it.state === 'ok'), used = {}, files = [];
+  for (const it of ok){ let nm = outName(it); if (used[nm]){ const b = nm.replace(/\.webp$/, ''); let k = 2; while (used[b + ' (' + k + ').webp']) k++; nm = b + ' (' + k + ').webp'; } used[nm] = 1; files.push({ name: nm, data: new Uint8Array(await it.blob.arrayBuffer()) }); }
+  if (!files.length) return;
+  const a = document.createElement('a'), u = URL.createObjectURL(makeZip(files)); a.href = u; a.download = 'webp.zip'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+}
+
+/* ---------- события ---------- */
+const drop = $('#drop');
+$('#pick').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+['dragenter', 'dragover'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.relatedTarget === null) drop.classList.remove('over'); }));
+document.addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+document.addEventListener('paste', e => { const f = [].slice.call((e.clipboardData || {}).files || []); if (f.length) addFiles(f); });
+document.querySelectorAll('input[name=mode], #cols, #rows, #px, #maxSide, #q').forEach(el => el.addEventListener('input', () => { syncUI(); later(); }));
+$('#zip').addEventListener('click', downloadZip);
+$('#clear').addEventListener('click', () => { runId++; items.forEach(it => it.url && URL.revokeObjectURL(it.url)); items.length = 0; $('#noWebp').hidden = true; render(); });
+syncUI(); render();
+</script>
+</body>
+</html>
